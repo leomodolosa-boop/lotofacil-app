@@ -80,7 +80,7 @@
 <body>
 <div class="wrap">
   <div>
-    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V2.0</span></h1>
+    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V2.1</span></h1>
     <p class="sub">Busca o resultado oficial da Caixa, confere seus 10 jogos automaticamente e calcula os valores. Tudo fica salvo neste navegador.</p>
   </div>
 
@@ -100,6 +100,18 @@
         <select id="reportMonth"><option value="">Nenhum mês salvo</option></select>
       </div>
       <button id="btnGerarMensal">Gerar relatório mensal</button>
+    </div>
+    <p class="sub" style="margin-top:10px;">Ou selecione um período personalizado:</p>
+    <div class="row">
+      <div class="field" style="min-width:140px;">
+        <label>De</label>
+        <input type="date" id="periodoDe">
+      </div>
+      <div class="field" style="min-width:140px;">
+        <label>Até</label>
+        <input type="date" id="periodoAte">
+      </div>
+      <button id="btnGerarPeriodo">Gerar relatório do período</button>
     </div>
     <textarea id="reportOutput" readonly style="display:none; width:100%; margin-top:14px; min-height:180px; background:var(--panel2); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:12px; font-family:ui-monospace,Consolas,monospace; font-size:.85rem; white-space:pre-wrap;"></textarea>
     <div class="row" id="reportActions" style="display:none; margin-top:10px;">
@@ -541,6 +553,16 @@ function monthLabelOf(key){
   return `${MESES[mm-1]}/${yyyy}`;
 }
 
+function toISODate(dataStr){
+  const {dd, mm, yyyy} = parseData(dataStr);
+  return `${yyyy}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+}
+
+function isoToBR(iso){
+  const [yyyy, mm, dd] = iso.split('-');
+  return `${dd}/${mm}/${yyyy}`;
+}
+
 function populateReportSelectors(){
   const draws = Object.values(state.draws).sort((a,b) => b.concurso - a.concurso);
   const selConcurso = $('reportConcurso');
@@ -553,6 +575,12 @@ function populateReportSelectors(){
   selMonth.innerHTML = months.length
     ? months.map(k => `<option value="${k}">${monthLabelOf(k)}</option>`).join('')
     : '<option value="">Nenhum mês salvo</option>';
+
+  if(draws.length){
+    const isoDates = draws.map(d => toISODate(d.data)).sort();
+    if(!$('periodoDe').value) $('periodoDe').value = isoDates[0];
+    if(!$('periodoAte').value) $('periodoAte').value = isoDates[isoDates.length-1];
+  }
 }
 
 function buildDailyReport(concurso){
@@ -873,6 +901,36 @@ ${linhasTiers}
 👥 Valor por pessoa (${s.numParticipantes}): *${fmtBRL(perPerson)}*`;
 }
 
+function buildPeriodReport(fromISO, toISO){
+  const draws = Object.values(state.draws)
+    .filter(d => {
+      const iso = toISODate(d.data);
+      return iso >= fromISO && iso <= toISO;
+    })
+    .sort((a,b) => a.concurso - b.concurso);
+  if(!draws.length) return null;
+  const {tiers, saldoDia} = aggregateTiers(draws);
+  const s = saveSettings();
+  const saldoLiquido = s.valorJogos + s.saldoAnterior - saldoDia;
+  const perPerson = s.numParticipantes > 0 ? saldoLiquido / s.numParticipantes : 0;
+  const linhasTiers = [15,14,13,12,11]
+    .filter(t => tiers[t].qtd > 0)
+    .map(t => `${t} acertos: ${tiers[t].qtd} jogos — ${fmtBRL(tiers[t].total)}`)
+    .join('\n') || 'Nenhum jogo bateu 11+ acertos no período.';
+  const concursosStr = `${draws[0].concurso} a ${draws[draws.length-1].concurso}`;
+  return `🍀 *${GROUP_NAME}* 🍀
+📆 Relatório do Período — ${isoToBR(fromISO)} a ${isoToBR(toISO)}
+Concursos ${concursosStr} (${draws.length} sorteios)
+
+🎯 Resumo de acertos:
+${linhasTiers}
+
+💰 Total de prêmios: *${fmtBRL(saldoDia)}*
+💵 Valor de jogos: ${fmtBRL(s.valorJogos)}
+📊 Saldo líquido: *${fmtBRL(saldoLiquido)}*
+👥 Valor por pessoa (${s.numParticipantes}): *${fmtBRL(perPerson)}*`;
+}
+
 function setReportStatus(msg, isErr){
   const el = $('reportStatus');
   el.textContent = msg;
@@ -966,6 +1024,14 @@ $('btnGerarDiario').addEventListener('click', () => {
 $('btnGerarMensal').addEventListener('click', () => {
   const key = $('reportMonth').value;
   showReport(buildMonthlyReport(key));
+});
+
+$('btnGerarPeriodo').addEventListener('click', () => {
+  const de = $('periodoDe').value;
+  const ate = $('periodoAte').value;
+  if(!de || !ate){ setReportStatus('Selecione as duas datas (de/até).', true); return; }
+  if(ate < de){ setReportStatus('A data final deve ser maior ou igual à inicial.', true); return; }
+  showReport(buildPeriodReport(de, ate));
 });
 
 $('btnGerarImagem').addEventListener('click', () => {
