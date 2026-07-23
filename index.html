@@ -80,7 +80,7 @@
 <body>
 <div class="wrap">
   <div>
-    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V2.2</span></h1>
+    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V2.3</span></h1>
     <p class="sub">Busca o resultado oficial da Caixa, confere seus 10 jogos automaticamente e calcula os valores. Tudo fica salvo neste navegador.</p>
   </div>
 
@@ -175,7 +175,7 @@
         <input type="number" id="saldoAnterior" step="0.01">
       </div>
     </div>
-    <p class="sub" style="margin-top:6px;">Saldo anterior positivo = ficou devendo da rodada passada. Negativo = sobrou saldo a favor.</p>
+    <p class="sub" style="margin-top:6px;">Saldo anterior positivo = sobrou saldo a favor da rodada passada (abate o valor a pagar). Negativo = ficou devendo.</p>
     <div class="summary-grid" style="margin-top:12px;">
       <div class="item"><div class="label">Saldo do dia (prêmios)</div><div class="value" id="outSaldoDia">R$ 0,00</div></div>
       <div class="item"><div class="label">Saldo líquido</div><div class="value" id="outSaldoLiquido">R$ 0,00</div></div>
@@ -477,7 +477,7 @@ function updateFinance(saldoDia){
   const s = saveSettings();
   $('outSaldoDia').textContent = fmtBRL(saldoDia);
   $('outSaldoDia').className = 'value ' + (saldoDia > 0 ? 'positive' : '');
-  const saldoLiquido = s.valorJogos + s.saldoAnterior - saldoDia;
+  const saldoLiquido = s.valorJogos - (saldoDia + s.saldoAnterior);
   $('outSaldoLiquido').textContent = fmtBRL(saldoLiquido);
   $('outSaldoLiquido').className = 'value ' + (saldoLiquido > 0 ? 'negative' : (saldoLiquido < 0 ? 'positive' : ''));
   const perPerson = s.numParticipantes > 0 ? saldoLiquido / s.numParticipantes : 0;
@@ -574,7 +574,7 @@ function buildDailyReport(concurso){
     .map(t => `${t} acertos: ${tiers[t].qtd} jogos — ${fmtBRL(tiers[t].total)}`)
     .join('\n') || 'Nenhum jogo bateu 11+ acertos até agora.';
   const s = saveSettings();
-  const saldoLiquido = s.valorJogos + s.saldoAnterior - saldoAcumulado;
+  const saldoLiquido = s.valorJogos - (saldoAcumulado + s.saldoAnterior);
   const perPerson = s.numParticipantes > 0 ? saldoLiquido / s.numParticipantes : 0;
   const concursosStr = allDraws.length > 1 ? `${allDraws[0].concurso} a ${allDraws[allDraws.length-1].concurso}` : `${d.concurso}`;
 
@@ -768,7 +768,7 @@ function buildDailyReportImage(concurso){
   y += 46;
 
   const s = saveSettings();
-  const saldoLiquido = s.valorJogos + s.saldoAnterior - saldoAcumulado;
+  const saldoLiquido = s.valorJogos - (saldoAcumulado + s.saldoAnterior);
   const perPerson = s.numParticipantes > 0 ? saldoLiquido / s.numParticipantes : 0;
 
   ctx.textAlign = 'left';
@@ -853,7 +853,7 @@ function buildMonthlyReport(monthKey){
   if(!draws.length) return null;
   const {tiers, saldoDia} = aggregateTiers(draws);
   const s = saveSettings();
-  const saldoLiquido = s.valorJogos + s.saldoAnterior - saldoDia;
+  const saldoLiquido = s.valorJogos - (saldoDia + s.saldoAnterior);
   const perPerson = s.numParticipantes > 0 ? saldoLiquido / s.numParticipantes : 0;
   const linhasTiers = [15,14,13,12,11]
     .filter(t => tiers[t].qtd > 0)
