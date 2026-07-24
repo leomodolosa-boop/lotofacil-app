@@ -80,7 +80,7 @@
 <body>
 <div class="wrap">
   <div>
-    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V3.0</span></h1>
+    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V3.1</span></h1>
     <p class="sub">Busca o resultado oficial da Caixa, confere seus 10 jogos automaticamente e calcula os valores. Tudo fica salvo neste navegador.</p>
   </div>
 
@@ -688,11 +688,13 @@ function buildDailyReportImage(concurso){
   const PANEL_PAD_TOP = 22, PANEL_ROW_H = 40, PANEL_DIVIDER_GAP = 22, PANEL_EMPH_H = 72, PANEL_PAD_BOTTOM = 24;
   const financePanelH = PANEL_PAD_TOP + PANEL_ROW_H + PANEL_ROW_H + PANEL_DIVIDER_GAP + PANEL_EMPH_H + PANEL_PAD_BOTTOM;
 
+  const GAME_ROW_H = 40, GAME_BALL_R = 16, GAME_BALL_GAP = 4;
+
   const W = 960;
   const H = 70 + 46 + 60
     + ((rows-1)*(ballR*2+gap) + ballR*2 + 40)
     + 46 + 40
-    + (Math.ceil(results.length/2)*44 + 30)
+    + (results.length*GAME_ROW_H + 30)
     + 50
     + (showAccum ? accumH + 30 : 0)
     + 46
@@ -749,18 +751,31 @@ function buildDailyReportImage(concurso){
   ctx.fillText('🎯 RESULTADO DO DIA', 60, y);
   y += 40;
 
-  const colW = (W-120)/2;
+  const hitSet = new Set(d.dezenas.map(Number));
   results.forEach((r, i) => {
-    const col = i % 2;
-    const row = Math.floor(i/2);
-    const x = 60 + col*colW;
-    const yy = y + row*44;
+    const game = GAMES[i];
     const win = r.ac >= 11;
+    const rowY = y + i*GAME_ROW_H + GAME_BALL_R;
+
+    ctx.textBaseline = 'alphabetic';
+    ctx.textAlign = 'left';
     ctx.fillStyle = win ? '#22c55e' : '#ffffff';
-    ctx.font = win ? `800 25px ${FONT}` : `600 23px ${FONT}`;
-    ctx.fillText(`Jogo #${r.num}: ${r.ac} acertos${win ? ' 🏆' : ''}`, x, yy);
+    ctx.font = `800 18px ${FONT}`;
+    ctx.fillText(`#${r.num}`, 60, rowY+6);
+
+    const ballsStartX = 118 + GAME_BALL_R;
+    game.forEach((n, gi) => {
+      const bx = ballsStartX + gi*(GAME_BALL_R*2+GAME_BALL_GAP);
+      drawBall(ctx, bx, rowY, GAME_BALL_R, n, hitSet.has(n));
+    });
+
+    ctx.textBaseline = 'alphabetic';
+    ctx.textAlign = 'right';
+    ctx.fillStyle = win ? '#22c55e' : '#ffffff';
+    ctx.font = `800 20px ${FONT}`;
+    ctx.fillText(`${r.ac}${win ? ' 🏆' : ''}`, W-60, rowY+6);
   });
-  y += Math.ceil(results.length/2)*44 + 30;
+  y += results.length*GAME_ROW_H + 30;
 
   ctx.textAlign = 'center';
   ctx.fillStyle = GOLD;
