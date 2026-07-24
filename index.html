@@ -80,7 +80,7 @@
 <body>
 <div class="wrap">
   <div>
-    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V2.6</span></h1>
+    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V3.0</span></h1>
     <p class="sub">Busca o resultado oficial da Caixa, confere seus 10 jogos automaticamente e calcula os valores. Tudo fica salvo neste navegador.</p>
   </div>
 
@@ -332,13 +332,14 @@ function setStatus(msg, isErr){
 async function fetchConcursoSafe(n){
   try{
     const res = await fetch(`${API_BASE}/${n}`);
-    if(!res.ok) return {concurso:n, pending:true};
-    const data = await res.json();
-    if(!data || !data.dezenas || !data.dezenas.length) return {concurso:n, pending:true};
-    return Object.assign(data, {pending:false});
-  }catch(e){
-    return {concurso:n, pending:true};
-  }
+    if(res.ok){
+      const data = await res.json();
+      if(data && data.dezenas && data.dezenas.length) return Object.assign(data, {pending:false});
+    }
+  }catch(e){ /* segue para o backup */ }
+  const repo = await fetchLatestFromRepo();
+  if(repo && Number(repo.concurso) === Number(n)) return Object.assign(repo, {pending:false});
+  return {concurso:n, pending:true};
 }
 
 // pdf.js embutido em base64 (nenhuma pasta externa necessaria)
@@ -390,6 +391,22 @@ async function extractPdfText(file){
 async function fetchLatestSafe(){
   try{
     const res = await fetch(`${API_BASE}/latest`);
+    if(!res.ok) return null;
+    const data = await res.json();
+    if(!data || !data.dezenas || !data.dezenas.length) return null;
+    return data;
+  }catch(e){
+    return null;
+  }
+}
+
+// Backup mantido automaticamente por um workflow do GitHub Actions no próprio
+// repositório (a cada hora), pois a API pública às vezes demora a sincronizar
+// o concurso mais recente. Como o arquivo fica no mesmo domínio do site, não
+// tem problema de CORS.
+async function fetchLatestFromRepo(){
+  try{
+    const res = await fetch('./latest.json', {cache: 'no-store'});
     if(!res.ok) return null;
     const data = await res.json();
     if(!data || !data.dezenas || !data.dezenas.length) return null;
@@ -1141,7 +1158,11 @@ if(navigator.share){
 
 async function autoLoadToday(){
   setStatus('Buscando resultado mais recente...');
-  const latest = await fetchLatestSafe();
+  const [latestApi, latestRepo] = await Promise.all([fetchLatestSafe(), fetchLatestFromRepo()]);
+  let latest = latestApi;
+  if(latestRepo && (!latest || Number(latestRepo.concurso) > Number(latest.concurso))){
+    latest = latestRepo;
+  }
   if(latest){
     saveDraws([latest]);
     state.lastDraws = [state.draws[latest.concurso]];

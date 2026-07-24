@@ -1,0 +1,46 @@
+{
+  "concurso": 3743,
+  "data": "23/07/2026",
+  "dezenas": [
+    "02",
+    "03",
+    "04",
+    "05",
+    "09",
+    "10",
+    "11",
+    "13",
+    "15",
+    "18",
+    "19",
+    "20",
+    "21",
+    "23",
+    "25"
+  ],
+  "premiacoes": [
+    {
+      "descricao": "15 acertos",
+      "valorPremio": 219528.17
+    },
+    {
+      "descricao": "14 acertos",
+      "valorPremio": 829.74
+    },
+    {
+      "descricao": "13 acertos",
+      "valorPremio": 35
+    },
+    {
+      "descricao": "12 acertos",
+      "valorPremio": 14
+    },
+    {
+      "descricao": "11 acertos",
+      "valorPremio": 7
+    }
+  ],
+  "acumulou": false,
+  "valorAcumuladoProximoConcurso": 0,
+  "valorEstimadoProximoConcurso": 2000000
+}
