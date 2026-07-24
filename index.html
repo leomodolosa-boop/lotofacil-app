@@ -80,7 +80,7 @@
 <body>
 <div class="wrap">
   <div>
-    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V2.3</span></h1>
+    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V2.4</span></h1>
     <p class="sub">Busca o resultado oficial da Caixa, confere seus 10 jogos automaticamente e calcula os valores. Tudo fica salvo neste navegador.</p>
   </div>
 
@@ -144,6 +144,36 @@
       <button id="btnBuscar">Buscar</button>
     </div>
     <p class="status" id="status"></p>
+    <details style="margin-top:10px;">
+      <summary style="cursor:pointer; color:var(--muted); font-size:.85rem;">A API ainda não tem o resultado de um concurso? Informe manualmente</summary>
+      <div class="row" style="margin-top:10px;">
+        <div class="field" style="min-width:110px;">
+          <label>Concurso</label>
+          <input type="number" id="manualConcurso" placeholder="ex: 3743">
+        </div>
+        <div class="field" style="min-width:140px;">
+          <label>Data do sorteio</label>
+          <input type="date" id="manualData">
+        </div>
+      </div>
+      <div class="field" style="margin-top:8px;">
+        <label>Dezenas sorteadas (15 números separados por espaço)</label>
+        <input type="text" id="manualDezenas" placeholder="ex: 02 03 04 05 09 10 11 13 15 18 19 20 21 23 25">
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <div class="field" style="min-width:140px;">
+          <label>Valor 14 acertos (R$)</label>
+          <input type="number" id="manualValor14" step="0.01" placeholder="opcional">
+        </div>
+        <div class="field" style="min-width:140px;">
+          <label>Valor 15 acertos (R$)</label>
+          <input type="number" id="manualValor15" step="0.01" placeholder="opcional">
+        </div>
+      </div>
+      <p class="sub" style="margin-top:6px;">11, 12 e 13 acertos já usam os valores oficiais fixos (R$7 / R$14 / R$35). Preencha 14 e 15 só se souber o valor daquele concurso — pode conferir no site da Caixa.</p>
+      <button id="btnSalvarManual" style="margin-top:6px;">Salvar resultado manual</button>
+      <p class="status" id="manualStatus"></p>
+    </details>
   </div>
 
   <div class="card" id="dailyResultsCard" style="display:none;">
@@ -628,8 +658,8 @@ function buildDailyReportImage(concurso){
   const tierLines = [15,14,13,12,11].filter(t => tiers[t].qtd > 0);
   const tierLineCount = tierLines.length || 1;
 
-  const showAccum = !!(d.acumulou && d.valorAcumulado > 0);
-  const isBigAccum = showAccum && d.valorAcumulado >= 2000000;
+  const showAccum = !!((d.acumulou && d.valorAcumulado > 0) || (!d.acumulou && d.valorEstimadoProximo > 0));
+  const isBigAccum = !!(d.acumulou && d.valorAcumulado >= 2000000);
   const accumH = showAccum ? (isBigAccum ? 148 : 84) : 0;
 
   const PANEL_PAD_TOP = 22, PANEL_ROW_H = 40, PANEL_DIVIDER_GAP = 22, PANEL_EMPH_H = 72, PANEL_PAD_BOTTOM = 24;
@@ -758,7 +788,10 @@ function buildDailyReportImage(concurso){
       ctx.textAlign = 'center';
       ctx.fillStyle = GOLD;
       ctx.font = `800 26px ${FONT}`;
-      ctx.fillText(`🔥 Acumulou! Próximo concurso: ${fmtBRL(d.valorAcumulado)}`, W/2, by+bh/2+9);
+      const label = d.acumulou
+        ? `🔥 Acumulou! Próximo concurso: ${fmtBRL(d.valorAcumulado)}`
+        : `💰 Estimativa do próximo concurso: ${fmtBRL(d.valorEstimadoProximo)}`;
+      ctx.fillText(label, W/2, by+bh/2+9);
     }
     y += accumH + 30;
   }
@@ -938,6 +971,54 @@ $('btnBuscar').addEventListener('click', () => {
   const ate = parseInt($('concursoAte').value);
   if(!de || !ate){ setStatus('Informe concurso inicial e final.', true); return; }
   runSearch(de, ate);
+});
+
+function setManualStatus(msg, isErr){
+  const el = $('manualStatus');
+  el.textContent = msg;
+  el.className = 'status' + (isErr ? ' err' : '');
+}
+
+$('btnSalvarManual').addEventListener('click', () => {
+  const concurso = parseInt($('manualConcurso').value);
+  const dataISO = $('manualData').value;
+  const nums = ($('manualDezenas').value.match(/\d{1,2}/g) || []).map(Number);
+  const uniq = [...new Set(nums)];
+
+  if(!concurso){ setManualStatus('Informe o número do concurso.', true); return; }
+  if(!dataISO){ setManualStatus('Informe a data do sorteio.', true); return; }
+  if(uniq.length !== 15 || uniq.some(n => n < 1 || n > 25)){
+    setManualStatus(`Encontrei ${uniq.length} número(s) válido(s) nas dezenas — preciso de exatamente 15 (entre 01 e 25).`, true);
+    return;
+  }
+
+  const valor14 = parseFloat($('manualValor14').value) || 0;
+  const valor15 = parseFloat($('manualValor15').value) || 0;
+  const [yyyy, mm, dd] = dataISO.split('-');
+  const dataBR = `${dd}/${mm}/${yyyy}`;
+
+  const draw = {
+    concurso,
+    data: dataBR,
+    dezenas: uniq.map(n => String(n).padStart(2,'0')),
+    premiacoes: [
+      {descricao: '15 acertos', valorPremio: valor15},
+      {descricao: '14 acertos', valorPremio: valor14},
+      {descricao: '13 acertos', valorPremio: 35},
+      {descricao: '12 acertos', valorPremio: 14},
+      {descricao: '11 acertos', valorPremio: 7},
+    ],
+  };
+
+  saveDraws([draw]);
+  state.lastDraws = [state.draws[concurso]];
+  renderDailyResults(state.lastDraws, []);
+  setManualStatus(`Concurso ${concurso} (${dataBR}) salvo manualmente com sucesso.`);
+  $('manualConcurso').value = '';
+  $('manualData').value = '';
+  $('manualDezenas').value = '';
+  $('manualValor14').value = '';
+  $('manualValor15').value = '';
 });
 
 ['valorJogos','numParticipantes','saldoAnterior'].forEach(id => {
