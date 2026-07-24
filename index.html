@@ -80,7 +80,7 @@
 <body>
 <div class="wrap">
   <div>
-    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V2.4</span></h1>
+    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V2.5</span></h1>
     <p class="sub">Busca o resultado oficial da Caixa, confere seus 10 jogos automaticamente e calcula os valores. Tudo fica salvo neste navegador.</p>
   </div>
 
@@ -674,7 +674,7 @@ function buildDailyReportImage(concurso){
     + (showAccum ? accumH + 30 : 0)
     + 46
     + 34 + 44
-    + tierLineCount*34 + 30
+    + tierLineCount*34 + 40 + 30
     + financePanelH + 26 + 34 + 50
     + 60;
 
@@ -826,6 +826,10 @@ function buildDailyReportImage(concurso){
     ctx.fillText('Nenhum jogo bateu 11+ acertos até agora.', 60, y);
     y += 34;
   }
+  ctx.font = `800 24px ${FONT}`;
+  ctx.fillStyle = GOLD;
+  ctx.fillText(`Total: ${fmtBRL(saldoAcumulado)}`, 60, y);
+  y += 40;
   y += 30;
 
   // ===== Painel do fluxo financeiro: bruto (−) prêmios = saldo líquido =====
