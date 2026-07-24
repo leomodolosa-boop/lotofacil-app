@@ -80,7 +80,7 @@
 <body>
 <div class="wrap">
   <div>
-    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V2.5</span></h1>
+    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V2.6</span></h1>
     <p class="sub">Busca o resultado oficial da Caixa, confere seus 10 jogos automaticamente e calcula os valores. Tudo fica salvo neste navegador.</p>
   </div>
 
@@ -146,6 +146,12 @@
     <p class="status" id="status"></p>
     <details style="margin-top:10px;">
       <summary style="cursor:pointer; color:var(--muted); font-size:.85rem;">A API ainda não tem o resultado de um concurso? Informe manualmente</summary>
+      <div class="field" style="margin-top:10px;">
+        <label>Colar texto copiado do site da Caixa (ou de qualquer lugar com o resultado)</label>
+        <textarea id="manualPaste" rows="4" style="width:100%; font-size:.85rem; background:var(--panel2); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:10px;" placeholder="Cole aqui o texto com o concurso, a data e as dezenas sorteadas..."></textarea>
+      </div>
+      <button id="btnExtrairManual" class="secondary" style="margin-top:6px;">Extrair automaticamente</button>
+      <p class="status" id="extrairStatus"></p>
       <div class="row" style="margin-top:10px;">
         <div class="field" style="min-width:110px;">
           <label>Concurso</label>
@@ -976,6 +982,45 @@ $('btnBuscar').addEventListener('click', () => {
   if(!de || !ate){ setStatus('Informe concurso inicial e final.', true); return; }
   runSearch(de, ate);
 });
+
+$('btnExtrairManual').addEventListener('click', () => {
+  const text = $('manualPaste').value;
+  if(!text.trim()){ setExtrairStatus('Cole o texto com o resultado antes de extrair.', true); return; }
+
+  const found = [];
+  const encontrado = {concurso: null, data: null, dezenas: null};
+
+  const mConcurso = text.match(/concurso\D{0,5}(\d{3,5})/i);
+  if(mConcurso){ encontrado.concurso = mConcurso[1]; found.push('concurso'); }
+
+  const mData = text.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  if(mData){ encontrado.data = mData[0]; found.push('data'); }
+
+  const dezenasGrupos = parseGamesFromPdfText(text);
+  if(dezenasGrupos.length){ encontrado.dezenas = dezenasGrupos[0]; found.push('dezenas'); }
+
+  if(encontrado.concurso) $('manualConcurso').value = encontrado.concurso;
+  if(encontrado.data){
+    const [dd, mm, yyyy] = encontrado.data.split('/');
+    $('manualData').value = `${yyyy}-${mm}-${dd}`;
+  }
+  if(encontrado.dezenas) $('manualDezenas').value = encontrado.dezenas.map(n => String(n).padStart(2,'0')).join(' ');
+
+  if(found.length === 0){
+    setExtrairStatus('Não consegui identificar nada nesse texto. Confira os campos manualmente abaixo.', true);
+  }else{
+    const faltando = ['concurso','data','dezenas'].filter(k => !found.includes(k));
+    setExtrairStatus(
+      `Encontrei: ${found.join(', ')}.` + (faltando.length ? ` Confira/preencha manualmente: ${faltando.join(', ')}.` : ' Confira os campos abaixo e clique em "Salvar resultado manual".')
+    );
+  }
+});
+
+function setExtrairStatus(msg, isErr){
+  const el = $('extrairStatus');
+  el.textContent = msg;
+  el.className = 'status' + (isErr ? ' err' : '');
+}
 
 function setManualStatus(msg, isErr){
   const el = $('manualStatus');
