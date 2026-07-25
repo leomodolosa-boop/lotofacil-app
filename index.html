@@ -80,7 +80,7 @@
 <body>
 <div class="wrap">
   <div>
-    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V3.2</span></h1>
+    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V3.3</span></h1>
     <p class="sub">Busca o resultado oficial da Caixa, confere seus 10 jogos automaticamente e calcula os valores. Tudo fica salvo neste navegador.</p>
   </div>
 
@@ -3119,8 +3119,7 @@ function buildDailyReportImage(concurso){
     + 46
     + 34 + 44
     + tierLineCount*34 + 40 + 30
-    + financePanelH + 26 + 34 + 26
-    + PIX_BOX_H + 40
+    + financePanelH + 26 + 34 + 44
     + 60;
 
   const scale = 2;
@@ -3333,10 +3332,7 @@ function buildDailyReportImage(concurso){
   y += 34;
   ctx.font = `800 30px ${FONT}`; ctx.fillStyle = '#ffffff';
   ctx.fillText(`👥 Valor por pessoa: ${fmtBRL(perPerson)}`, W/2, y);
-  y += 26;
-
-  drawPixBox(ctx, 60, y, W-120, perPerson, FONT, GOLD, MUTED);
-  y += PIX_BOX_H + 40;
+  y += 44;
 
   ctx.textAlign = 'center';
   ctx.font = `500 16px ${FONT}`;
