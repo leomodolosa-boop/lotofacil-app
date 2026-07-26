@@ -45,8 +45,10 @@ def main():
     for source in (from_guidi, from_loteriascaixa_api):
         try:
             result = source()
+            print(f"{source.__name__}: OK (concurso {result['concurso']}, {result['data']})")
             break
         except Exception as e:
+            print(f"{source.__name__}: FALHOU ({type(e).__name__}: {e})")
             errors.append(f"{source.__name__}: {e}")
 
     if result is None:
