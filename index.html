@@ -80,7 +80,7 @@
 <body>
 <div class="wrap">
   <div>
-    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V3.3</span></h1>
+    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V3.4</span></h1>
     <p class="sub">Busca o resultado oficial da Caixa, confere seus 10 jogos automaticamente e calcula os valores. Tudo fica salvo neste navegador.</p>
   </div>
 
@@ -3100,8 +3100,8 @@ function buildDailyReportImage(concurso){
   const tierLines = [15,14,13,12,11].filter(t => tiers[t].qtd > 0);
   const tierLineCount = tierLines.length || 1;
 
-  const showAccum = !!((d.acumulou && d.valorAcumulado > 0) || (!d.acumulou && d.valorEstimadoProximo > 0));
-  const isBigAccum = !!(d.acumulou && d.valorAcumulado >= 2000000);
+  const showAccum = !!(d.valorEstimadoProximo > 0);
+  const isBigAccum = !!(d.acumulou && d.valorEstimadoProximo >= 2000000);
   const accumH = showAccum ? (isBigAccum ? 148 : 84) : 0;
 
   const PANEL_PAD_TOP = 22, PANEL_ROW_H = 40, PANEL_DIVIDER_GAP = 22, PANEL_EMPH_H = 72, PANEL_PAD_BOTTOM = 24;
@@ -3228,7 +3228,7 @@ function buildDailyReportImage(concurso){
       ctx.font = `800 34px ${FONT}`;
       ctx.fillText('🔥 ACUMULOU! 🔥', W/2, by+46);
       ctx.font = `800 42px ${FONT}`;
-      ctx.fillText(`${fmtBRL(d.valorAcumulado)}`, W/2, by+96);
+      ctx.fillText(`${fmtBRL(d.valorEstimadoProximo)}`, W/2, by+96);
       ctx.font = `700 18px ${FONT}`;
       ctx.fillText('para o próximo concurso', W/2, by+124);
     }else{
@@ -3246,7 +3246,7 @@ function buildDailyReportImage(concurso){
       ctx.fillStyle = GOLD;
       ctx.font = `800 26px ${FONT}`;
       const label = d.acumulou
-        ? `🔥 Acumulou! Próximo concurso: ${fmtBRL(d.valorAcumulado)}`
+        ? `🔥 Acumulou! Próximo concurso: ${fmtBRL(d.valorEstimadoProximo)}`
         : `💰 Estimativa do próximo concurso: ${fmtBRL(d.valorEstimadoProximo)}`;
       ctx.fillText(label, W/2, by+bh/2+9);
     }
