@@ -80,7 +80,7 @@
 <body>
 <div class="wrap">
   <div>
-    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V3.4</span></h1>
+    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V3.5</span></h1>
     <p class="sub">Busca o resultado oficial da Caixa, confere seus 10 jogos automaticamente e calcula os valores. Tudo fica salvo neste navegador.</p>
   </div>
 
@@ -93,6 +93,14 @@
       </div>
       <button id="btnGerarDiario">Gerar relatório diário</button>
       <button id="btnGerarImagem" class="secondary">Gerar imagem</button>
+      <div class="field" style="min-width:90px;">
+        <label>De (opcional)</label>
+        <input type="number" id="reportRangeFrom" placeholder="3725">
+      </div>
+      <div class="field" style="min-width:90px;">
+        <label>Até (opcional)</label>
+        <input type="number" id="reportRangeTo" placeholder="3748">
+      </div>
     </div>
     <div class="row" style="margin-top:10px;">
       <div class="field" style="min-width:220px;">
@@ -3345,6 +3353,16 @@ function buildDailyReportImage(concurso){
 function buildMonthlyReport(monthKey){
   const draws = Object.values(state.draws).filter(d => monthKeyOf(d.data) === monthKey).sort((a,b) => a.concurso - b.concurso);
   if(!draws.length) return null;
+  return buildAggregateReport(draws, `📆 Relatório Mensal — ${monthLabelOf(monthKey)}`);
+}
+
+function buildRangeReport(from, to){
+  const draws = Object.values(state.draws).filter(d => d.concurso >= from && d.concurso <= to).sort((a,b) => a.concurso - b.concurso);
+  if(!draws.length) return null;
+  return buildAggregateReport(draws, `📆 Relatório — Concursos ${from} a ${to}`);
+}
+
+function buildAggregateReport(draws, subtitle){
   const {tiers, saldoDia} = aggregateTiers(draws);
   const s = saveSettings();
   const saldoLiquido = s.valorJogos - (saldoDia + s.saldoAnterior);
@@ -3352,10 +3370,10 @@ function buildMonthlyReport(monthKey){
   const linhasTiers = [15,14,13,12,11]
     .filter(t => tiers[t].qtd > 0)
     .map(t => `${t} acertos: ${tiers[t].qtd} jogos — ${fmtBRL(tiers[t].total)}`)
-    .join('\n') || 'Nenhum jogo bateu 11+ acertos no mês.';
+    .join('\n') || 'Nenhum jogo bateu 11+ acertos no período.';
   const concursosStr = `${draws[0].concurso} a ${draws[draws.length-1].concurso}`;
   return `🍀 *${GROUP_NAME}* 🍀
-📆 Relatório Mensal — ${monthLabelOf(monthKey)}
+${subtitle}
 Concursos ${concursosStr} (${draws.length} sorteios)
 
 🎯 Resumo de acertos:
@@ -3370,7 +3388,16 @@ ${linhasTiers}
 function buildMonthlyReportImage(monthKey){
   const draws = Object.values(state.draws).filter(d => monthKeyOf(d.data) === monthKey).sort((a,b) => a.concurso - b.concurso);
   if(!draws.length) return null;
+  return buildAggregateReportImage(draws, `📆 Relatório Mensal — ${monthLabelOf(monthKey)}`);
+}
 
+function buildRangeReportImage(from, to){
+  const draws = Object.values(state.draws).filter(d => d.concurso >= from && d.concurso <= to).sort((a,b) => a.concurso - b.concurso);
+  if(!draws.length) return null;
+  return buildAggregateReportImage(draws, `📆 Relatório — Concursos ${from} a ${to}`);
+}
+
+function buildAggregateReportImage(draws, subtitle){
   const {tiers, saldoDia} = aggregateTiers(draws);
   const tierLines = [15,14,13,12,11].filter(t => tiers[t].qtd > 0);
   const tierLineCount = tierLines.length || 1;
@@ -3409,7 +3436,7 @@ function buildMonthlyReportImage(monthKey){
   y += 46;
   ctx.font = `600 26px ${FONT}`;
   ctx.fillStyle = MUTED;
-  ctx.fillText(`📆 Relatório Mensal — ${monthLabelOf(monthKey)}`, W/2, y);
+  ctx.fillText(subtitle, W/2, y);
 
   y += 60;
   ctx.textAlign = 'left';
@@ -3431,7 +3458,7 @@ function buildMonthlyReportImage(monthKey){
       y += 34;
     });
   }else{
-    ctx.fillText('Nenhum jogo bateu 11+ acertos no mês.', 60, y);
+    ctx.fillText('Nenhum jogo bateu 11+ acertos no período.', 60, y);
     y += 34;
   }
   ctx.font = `800 24px ${FONT}`;
@@ -3671,7 +3698,18 @@ $('btnClearHist').addEventListener('click', () => {
   }
 });
 
+function parseReportRange(){
+  const fromRaw = $('reportRangeFrom').value.trim();
+  const toRaw = $('reportRangeTo').value.trim();
+  if(!fromRaw || !toRaw) return null;
+  const from = parseInt(fromRaw), to = parseInt(toRaw);
+  if(isNaN(from) || isNaN(to)) return null;
+  return from <= to ? {from, to} : {from: to, to: from};
+}
+
 $('btnGerarDiario').addEventListener('click', () => {
+  const range = parseReportRange();
+  if(range){ showReport(buildRangeReport(range.from, range.to)); return; }
   const concurso = parseInt($('reportConcurso').value);
   showReport(buildDailyReport(concurso));
 });
@@ -3687,6 +3725,8 @@ $('btnGerarImagemMensal').addEventListener('click', () => {
 });
 
 $('btnGerarImagem').addEventListener('click', () => {
+  const range = parseReportRange();
+  if(range){ showReportImage(buildRangeReportImage(range.from, range.to)); return; }
   const concurso = parseInt($('reportConcurso').value);
   showReportImage(buildDailyReportImage(concurso));
 });
