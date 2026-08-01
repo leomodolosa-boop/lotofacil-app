@@ -80,7 +80,7 @@
 <body>
 <div class="wrap">
   <div>
-    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V3.9</span></h1>
+    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V3.10</span></h1>
     <p class="sub">Busca o resultado oficial da Caixa, confere seus 10 jogos automaticamente e calcula os valores. Tudo fica salvo neste navegador.</p>
   </div>
 
@@ -3712,6 +3712,40 @@ function parseReportRange(){
   return from <= to ? {from, to} : {from: to, to: from};
 }
 
+// O relatório só consegue somar concursos que já foram buscados e salvos neste
+// navegador — avisa quando o intervalo pedido tem concursos faltando, para o total
+// não parecer "errado" quando na verdade só está incompleto.
+function checkRangeCoverage(from, to){
+  const missing = [];
+  for(let n = from; n <= to; n++){
+    if(!state.draws[n]) missing.push(n);
+  }
+  if(!missing.length) return '';
+  const sample = missing.length > 6
+    ? `${missing.slice(0,6).join(', ')}... (+${missing.length-6})`
+    : missing.join(', ');
+  return `⚠️ Total parcial: não foi possível buscar ${missing.length} concurso(s) do intervalo (${sample}).`;
+}
+
+// Busca automaticamente, na API, qualquer concurso do intervalo informado que ainda
+// não esteja salvo neste navegador, antes de gerar o relatório.
+async function fetchMissingConcursos(from, to){
+  const missing = [];
+  for(let n = from; n <= to; n++){
+    if(!state.draws[n]) missing.push(n);
+  }
+  if(!missing.length) return;
+
+  const CAP = 60;
+  const toFetch = missing.slice(0, CAP);
+  setReportStatus(`Buscando ${toFetch.length} concurso(s) que faltam no intervalo...`);
+  try{
+    const results = await Promise.all(toFetch.map(fetchConcursoSafe));
+    const draws = results.filter(d => !d.pending);
+    if(draws.length) saveDraws(draws);
+  }catch(e){ /* concursos que falharem continuam faltando e aparecem no aviso final */ }
+}
+
 // Campos "De"/"Até" e o mês do relatório mensal ficam fixos no que o usuário digitou/
 // escolheu por último, salvos no navegador, até ele mudar de novo manualmente.
 $('reportRangeFrom').value = localStorage.getItem('lf_reportRangeFrom') || '';
@@ -3720,9 +3754,15 @@ $('reportRangeFrom').addEventListener('input', () => localStorage.setItem('lf_re
 $('reportRangeTo').addEventListener('input', () => localStorage.setItem('lf_reportRangeTo', $('reportRangeTo').value));
 $('reportMonth').addEventListener('change', () => localStorage.setItem('lf_reportMonth', $('reportMonth').value));
 
-$('btnGerarDiario').addEventListener('click', () => {
+$('btnGerarDiario').addEventListener('click', async () => {
   const range = parseReportRange();
-  if(range){ showReport(buildRangeReport(range.from, range.to)); return; }
+  if(range){
+    await fetchMissingConcursos(range.from, range.to);
+    showReport(buildRangeReport(range.from, range.to));
+    const warn = checkRangeCoverage(range.from, range.to);
+    if(warn) setReportStatus(warn, true);
+    return;
+  }
   const concurso = parseInt($('reportConcurso').value);
   showReport(buildDailyReport(concurso));
 });
@@ -3737,9 +3777,15 @@ $('btnGerarImagemMensal').addEventListener('click', () => {
   showReportImage(buildMonthlyReportImage(key));
 });
 
-$('btnGerarImagem').addEventListener('click', () => {
+$('btnGerarImagem').addEventListener('click', async () => {
   const range = parseReportRange();
-  if(range){ showReportImage(buildRangeReportImage(range.from, range.to)); return; }
+  if(range){
+    await fetchMissingConcursos(range.from, range.to);
+    showReportImage(buildRangeReportImage(range.from, range.to));
+    const warn = checkRangeCoverage(range.from, range.to);
+    if(warn) setReportStatus(warn, true);
+    return;
+  }
   const concurso = parseInt($('reportConcurso').value);
   showReportImage(buildDailyReportImage(concurso));
 });
