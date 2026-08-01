@@ -80,7 +80,7 @@
 <body>
 <div class="wrap">
   <div>
-    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V3.7</span></h1>
+    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V3.8</span></h1>
     <p class="sub">Busca o resultado oficial da Caixa, confere seus 10 jogos automaticamente e calcula os valores. Tudo fica salvo neste navegador.</p>
   </div>
 
@@ -3411,10 +3411,14 @@ function buildAggregateReportImage(draws, subtitle){
   const financePanelH = PANEL_PAD_TOP + PANEL_ROW_H + PANEL_ROW_H + PANEL_DIVIDER_GAP + PANEL_EMPH_H + PANEL_PAD_BOTTOM;
 
   const GAME_ROW_H = 40, GAME_BALL_R = 16, GAME_BALL_GAP = 4;
+  const ballR = 28, gap = 14, perRow = 8;
+  const rows = 2; // sorteio da Lotofácil sempre tem 15 dezenas (2 linhas de 8+7)
+  const dezenasH = (rows-1)*(ballR*2+gap) + ballR*2 + 40;
+  const DAY_BLOCK_H = 34 + dezenasH + 46 + 40 + (GAMES.length*GAME_ROW_H + 30) + 50 + 30;
 
   const W = 960;
   const H = 70 + 46 + 60
-    + 40 + (GAMES.length*GAME_ROW_H + 46)
+    + 40 + draws.length*DAY_BLOCK_H
     + 34 + 44
     + tierLineCount*34 + 40 + 30
     + financePanelH + 26 + 34 + 26
@@ -3450,24 +3454,77 @@ function buildAggregateReportImage(draws, subtitle){
   ctx.textAlign = 'left';
   ctx.fillStyle = GOLD;
   ctx.font = `800 28px ${FONT}`;
-  ctx.fillText('🎲 SEUS JOGOS', 60, y);
+  ctx.fillText('📅 RESULTADOS DO PERÍODO', 60, y);
   y += 40;
 
-  GAMES.forEach((game, i) => {
-    const rowY = y + i*GAME_ROW_H + GAME_BALL_R;
-    ctx.textBaseline = 'alphabetic';
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#ffffff';
-    ctx.font = `800 18px ${FONT}`;
-    ctx.fillText(`#${i+1}`, 60, rowY+6);
+  draws.forEach(d => {
+    const dezenas = d.dezenas.slice().sort((a,b) => a-b);
+    const hitSet = new Set(d.dezenas.map(Number));
+    const results = GAMES.map((game, i) => ({num: i+1, ac: acertosCount(game, d.dezenas)}));
 
-    const ballsStartX = 118 + GAME_BALL_R;
-    game.forEach((n, gi) => {
-      const bx = ballsStartX + gi*(GAME_BALL_R*2+GAME_BALL_GAP);
-      drawBall(ctx, bx, rowY, GAME_BALL_R, n, true);
+    ctx.textAlign = 'left';
+    ctx.font = `700 22px ${FONT}`;
+    ctx.fillStyle = MUTED;
+    ctx.fillText(`📅 Concurso ${d.concurso} — ${d.data}`, 60, y);
+    y += 34;
+
+    dezenas.forEach((n, i) => {
+      const row = Math.floor(i / perRow);
+      const col = i % perRow;
+      const rowCount = Math.min(perRow, dezenas.length - row*perRow);
+      const rowWidth = rowCount*(ballR*2+gap) - gap;
+      const startX = W/2 - rowWidth/2 + ballR;
+      const x = startX + col*(ballR*2+gap);
+      const yy = y + row*(ballR*2+gap);
+      drawBall(ctx, x, yy, ballR, n, true);
     });
+    y += dezenasH;
+
+    ctx.strokeStyle = 'rgba(255,255,255,.25)';
+    ctx.beginPath(); ctx.moveTo(60, y); ctx.lineTo(W-60, y); ctx.stroke();
+    y += 46;
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = GOLD;
+    ctx.font = `800 24px ${FONT}`;
+    ctx.fillText('🎯 RESULTADO DO DIA', 60, y);
+    y += 40;
+
+    results.forEach((r, i) => {
+      const game = GAMES[i];
+      const win = r.ac >= 11;
+      const rowY = y + i*GAME_ROW_H + GAME_BALL_R;
+
+      ctx.textBaseline = 'alphabetic';
+      ctx.textAlign = 'left';
+      ctx.fillStyle = win ? '#22c55e' : '#ffffff';
+      ctx.font = `800 18px ${FONT}`;
+      ctx.fillText(`#${r.num}`, 60, rowY+6);
+
+      const ballsStartX = 118 + GAME_BALL_R;
+      game.forEach((n, gi) => {
+        const bx = ballsStartX + gi*(GAME_BALL_R*2+GAME_BALL_GAP);
+        drawBall(ctx, bx, rowY, GAME_BALL_R, n, hitSet.has(n));
+      });
+
+      ctx.textBaseline = 'alphabetic';
+      ctx.textAlign = 'right';
+      ctx.fillStyle = win ? '#22c55e' : '#ffffff';
+      ctx.font = `800 20px ${FONT}`;
+      ctx.fillText(`${r.ac}${win ? ' 🏆' : ''}`, W-60, rowY+6);
+    });
+    y += results.length*GAME_ROW_H + 30;
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = GOLD;
+    ctx.font = `800 26px ${FONT}`;
+    ctx.fillText(`💰 Prêmio do dia: ${fmtBRL(d.saldoDia)}`, W/2, y);
+    y += 50;
+
+    ctx.strokeStyle = 'rgba(255,255,255,.15)';
+    ctx.beginPath(); ctx.moveTo(60, y); ctx.lineTo(W-60, y); ctx.stroke();
+    y += 30;
   });
-  y += GAMES.length*GAME_ROW_H + 46;
 
   ctx.textAlign = 'left';
   ctx.fillStyle = GOLD;
