@@ -80,7 +80,7 @@
 <body>
 <div class="wrap">
   <div>
-    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V3.6</span></h1>
+    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V3.7</span></h1>
     <p class="sub">Busca o resultado oficial da Caixa, confere seus 10 jogos automaticamente e calcula os valores. Tudo fica salvo neste navegador.</p>
   </div>
 
@@ -3410,8 +3410,11 @@ function buildAggregateReportImage(draws, subtitle){
   const PANEL_PAD_TOP = 22, PANEL_ROW_H = 40, PANEL_DIVIDER_GAP = 22, PANEL_EMPH_H = 72, PANEL_PAD_BOTTOM = 24;
   const financePanelH = PANEL_PAD_TOP + PANEL_ROW_H + PANEL_ROW_H + PANEL_DIVIDER_GAP + PANEL_EMPH_H + PANEL_PAD_BOTTOM;
 
+  const GAME_ROW_H = 40, GAME_BALL_R = 16, GAME_BALL_GAP = 4;
+
   const W = 960;
   const H = 70 + 46 + 60
+    + 40 + (GAMES.length*GAME_ROW_H + 46)
     + 34 + 44
     + tierLineCount*34 + 40 + 30
     + financePanelH + 26 + 34 + 26
@@ -3444,6 +3447,28 @@ function buildAggregateReportImage(draws, subtitle){
   ctx.fillText(subtitle, W/2, y);
 
   y += 60;
+  ctx.textAlign = 'left';
+  ctx.fillStyle = GOLD;
+  ctx.font = `800 28px ${FONT}`;
+  ctx.fillText('🎲 SEUS JOGOS', 60, y);
+  y += 40;
+
+  GAMES.forEach((game, i) => {
+    const rowY = y + i*GAME_ROW_H + GAME_BALL_R;
+    ctx.textBaseline = 'alphabetic';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `800 18px ${FONT}`;
+    ctx.fillText(`#${i+1}`, 60, rowY+6);
+
+    const ballsStartX = 118 + GAME_BALL_R;
+    game.forEach((n, gi) => {
+      const bx = ballsStartX + gi*(GAME_BALL_R*2+GAME_BALL_GAP);
+      drawBall(ctx, bx, rowY, GAME_BALL_R, n, true);
+    });
+  });
+  y += GAMES.length*GAME_ROW_H + 46;
+
   ctx.textAlign = 'left';
   ctx.fillStyle = GOLD;
   ctx.font = `800 28px ${FONT}`;
