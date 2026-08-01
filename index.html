@@ -80,7 +80,7 @@
 <body>
 <div class="wrap">
   <div>
-    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V3.5</span></h1>
+    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V3.6</span></h1>
     <p class="sub">Busca o resultado oficial da Caixa, confere seus 10 jogos automaticamente e calcula os valores. Tudo fica salvo neste navegador.</p>
   </div>
 
@@ -2916,6 +2916,11 @@ function populateReportSelectors(){
   selMonth.innerHTML = months.length
     ? months.map(k => `<option value="${k}">${monthLabelOf(k)}</option>`).join('')
     : '<option value="">Nenhum mês salvo</option>';
+
+  // Mantém a última escolha do usuário fixa (em vez de voltar sempre para o mês mais
+  // recente), até ele mudar manualmente de novo.
+  const savedMonth = localStorage.getItem('lf_reportMonth');
+  if(savedMonth && months.includes(savedMonth)) selMonth.value = savedMonth;
 }
 
 function buildDailyReport(concurso){
@@ -3706,6 +3711,14 @@ function parseReportRange(){
   if(isNaN(from) || isNaN(to)) return null;
   return from <= to ? {from, to} : {from: to, to: from};
 }
+
+// Campos "De"/"Até" e o mês do relatório mensal ficam fixos no que o usuário digitou/
+// escolheu por último, salvos no navegador, até ele mudar de novo manualmente.
+$('reportRangeFrom').value = localStorage.getItem('lf_reportRangeFrom') || '';
+$('reportRangeTo').value = localStorage.getItem('lf_reportRangeTo') || '';
+$('reportRangeFrom').addEventListener('input', () => localStorage.setItem('lf_reportRangeFrom', $('reportRangeFrom').value));
+$('reportRangeTo').addEventListener('input', () => localStorage.setItem('lf_reportRangeTo', $('reportRangeTo').value));
+$('reportMonth').addEventListener('change', () => localStorage.setItem('lf_reportMonth', $('reportMonth').value));
 
 $('btnGerarDiario').addEventListener('click', () => {
   const range = parseReportRange();
