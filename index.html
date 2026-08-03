@@ -80,7 +80,7 @@
 <body>
 <div class="wrap">
   <div>
-    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V3.10</span></h1>
+    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V3.11</span></h1>
     <p class="sub">Busca o resultado oficial da Caixa, confere seus 10 jogos automaticamente e calcula os valores. Tudo fica salvo neste navegador.</p>
   </div>
 
@@ -3864,6 +3864,11 @@ function refreshAfterGamesChange(){
   if(state.lastDraws.length) renderDailyResults(state.lastDraws, []);
 }
 
+// Fica true assim que um PDF de comprovante novo é importado, até o usuário salvar
+// (ou trocar de aba) — usado para saber se o "Salvar jogos" seguinte é a confirmação
+// de uma nova leva de jogos (e não só um ajuste manual nos jogos atuais).
+let gamesJustImportedFromPdf = false;
+
 $('btnSalvarJogos').addEventListener('click', () => {
   const {games, errors} = textToGames($('gamesTextarea').value);
   if(errors.length){
@@ -3874,10 +3879,26 @@ $('btnSalvarJogos').addEventListener('click', () => {
     setGamesStatus('Nenhum jogo válido encontrado.', true);
     return;
   }
+
+  let resetHistory = false;
+  if(gamesJustImportedFromPdf){
+    resetHistory = confirm('Novo comprovante importado — apagar o histórico de resultados conferidos anteriormente (de outra leva de jogos) para começar do zero com esses jogos?');
+  }
+  gamesJustImportedFromPdf = false;
+
   GAMES = games;
   localStorage.setItem('lf_games', JSON.stringify(GAMES));
+
+  if(resetHistory){
+    state.draws = {};
+    localStorage.removeItem('lf_draws');
+    state.lastDraws = [];
+  }
+
   refreshAfterGamesChange();
-  setGamesStatus(`${games.length} jogo(s) salvos e histórico recalculado.`);
+  setGamesStatus(resetHistory
+    ? `${games.length} jogo(s) salvos, histórico anterior apagado.`
+    : `${games.length} jogo(s) salvos e histórico recalculado.`);
 });
 
 $('btnResetJogos').addEventListener('click', () => {
@@ -3900,6 +3921,7 @@ $('pdfInput').addEventListener('change', async (e) => {
       setGamesStatus('Não consegui identificar jogos no PDF. Confira o arquivo ou digite manualmente.', true);
     }else{
       $('gamesTextarea').value = gamesToText(games);
+      gamesJustImportedFromPdf = true;
       setGamesStatus(`${games.length} jogo(s) detectado(s) automaticamente — confira os números abaixo antes de clicar em "Salvar jogos".`);
     }
   }catch(err){
