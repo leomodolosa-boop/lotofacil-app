@@ -6,81 +6,111 @@
 <title>Conferência Automática — Bolão Lotofácil</title>
 <style>
   :root{
-    /* Azul bebê — fixo, não muda com o tema do sistema. Texto escurecido pra manter legibilidade num fundo claro. */
-    --bg:#BEE3F8;
+    /* Paleta fixa — não muda com o tema do sistema, pra manter a leitura previsível
+       independente do celular de cada participante do grupo. */
+    --bg:#EFF4FA;
+    --bg2:#E4EDF7;
     --panel:#ffffff;
-    --panel2:#EAF6FE;
-    --border:#AEDBF2;
-    --text:#16324a; --muted:#5b7f93;
-    --accent:#16a34a; --accent2:#f5a623; --btn-text:#3a1f00; --danger:#dc2626; --hit:#16a34a;
+    --panel2:#F3F7FC;
+    --border:#DCE6F0;
+    --border-strong:#C5D6E8;
+    --text:#132338; --muted:#647B92;
+    --accent:#16924f; --accent-soft:#E4F5EC;
+    --accent2:#2563eb; --accent2-hover:#1d4ed8; --btn-text:#ffffff;
+    --danger:#dc2626; --danger-soft:#FCEAEA; --hit:#16924f;
+    --radius:12px; --radius-sm:8px;
+    --shadow-card:0 1px 2px rgba(19,35,56,.04), 0 6px 20px rgba(19,35,56,.05);
+    --shadow-sticky:0 10px 24px rgba(19,35,56,.10);
   }
   *{box-sizing:border-box;}
   body{
-    margin:0; font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-    background:var(--bg); color:var(--text); padding:14px 12px 30px;
+    margin:0; font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    background:linear-gradient(180deg, var(--bg2) 0%, var(--bg) 340px, var(--bg) 100%);
+    color:var(--text); padding:18px 14px 34px; line-height:1.45;
+    -webkit-font-smoothing:antialiased;
   }
-  .wrap{max-width:980px; margin:0 auto; display:flex; flex-direction:column; gap:12px;}
-  h1{font-size:1.25rem; margin:0 0 2px;}
-  .sub{color:var(--muted); font-size:.8rem; margin:0 0 4px;}
-  .card{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px 14px;}
-  .card h2{font-size:.95rem; margin:0 0 8px; display:flex; align-items:center; gap:6px;}
-  .row{display:flex; flex-wrap:wrap; gap:8px; align-items:flex-end;}
-  .field{display:flex; flex-direction:column; gap:3px; min-width:130px;}
-  .field label{font-size:.74rem; color:var(--muted);}
-  input[type=number], input[type=text], select{
+  .wrap{max-width:980px; margin:0 auto; display:flex; flex-direction:column; gap:14px;}
+  h1{font-size:1.32rem; margin:0 0 3px; font-weight:800; letter-spacing:-.01em;}
+  .sub{color:var(--muted); font-size:.82rem; margin:0 0 4px;}
+  .card{
+    background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
+    padding:16px 18px; box-shadow:var(--shadow-card);
+  }
+  .card h2{
+    font-size:.98rem; margin:0 0 12px; padding-bottom:10px; font-weight:700;
+    display:flex; align-items:center; gap:6px; border-bottom:1px solid var(--border);
+    letter-spacing:-.005em;
+  }
+  .row{display:flex; flex-wrap:wrap; gap:9px; align-items:flex-end;}
+  .field{display:flex; flex-direction:column; gap:4px; min-width:130px;}
+  .field label{font-size:.72rem; color:var(--muted); font-weight:600; letter-spacing:.01em;}
+  input[type=number], input[type=text], input[type=date], select{
     background:var(--panel2); border:1px solid var(--border); color:var(--text);
-    border-radius:7px; padding:6px 8px; font-size:.88rem; width:100%;
+    border-radius:var(--radius-sm); padding:8px 10px; font-size:.88rem; width:100%;
+    font-family:inherit; transition:border-color .15s, box-shadow .15s;
+  }
+  input:focus, select:focus, textarea:focus{
+    outline:none; border-color:var(--accent2); box-shadow:0 0 0 3px rgba(37,99,235,.14);
   }
   button{
-    background:var(--accent2); color:var(--btn-text); border:none; border-radius:7px;
-    padding:7px 12px; font-size:.85rem; cursor:pointer; font-weight:600;
+    background:var(--accent2); color:var(--btn-text); border:none; border-radius:var(--radius-sm);
+    padding:9px 14px; font-size:.85rem; cursor:pointer; font-weight:700;
+    transition:filter .15s, transform .05s; letter-spacing:.01em;
   }
-  button.secondary{background:var(--panel2); color:var(--text); border:1px solid var(--border);}
+  button.secondary{background:var(--panel2); color:var(--text); border:1px solid var(--border-strong); font-weight:600;}
   button:hover{filter:brightness(1.08);}
+  button:active{transform:translateY(1px);}
   button:disabled{opacity:.5; cursor:not-allowed;}
   .status{font-size:.8rem; color:var(--muted); min-height:16px;}
-  .status.err{color:var(--danger);}
+  .status.err{color:var(--danger); font-weight:600;}
   table{width:100%; border-collapse:collapse; font-size:.85rem;}
-  th,td{padding:4px 6px; text-align:center; border-bottom:1px solid var(--border);}
-  th{color:var(--muted); font-weight:600; font-size:.74rem; text-transform:uppercase; letter-spacing:.03em;}
+  th,td{padding:8px 6px; text-align:center; border-bottom:1px solid var(--border);}
+  th{color:var(--muted); font-weight:700; font-size:.7rem; text-transform:uppercase; letter-spacing:.05em; background:var(--panel2);}
+  th:first-child{border-top-left-radius:var(--radius-sm);}
+  th:last-child{border-top-right-radius:var(--radius-sm);}
+  tbody tr:hover{background:var(--panel2);}
   td.num{font-variant-numeric:tabular-nums;}
   .ball{
     display:inline-flex; align-items:center; justify-content:center;
-    width:26px; height:26px; border-radius:50%; font-size:.76rem; font-weight:800;
-    background:rgba(0,0,0,.32); color:#ffffff; margin:1px;
-    border:1px solid rgba(255,255,255,.18);
+    width:27px; height:27px; border-radius:50%; font-size:.76rem; font-weight:800;
+    background:#DCE6F0; color:#3d5570; margin:2px;
+    border:1px solid rgba(19,35,56,.06);
+    font-variant-numeric:tabular-nums;
   }
-  .ball.hit{background:var(--accent); color:#06210f; border-color:transparent;}
+  .ball.hit{background:var(--accent); color:#ffffff; border-color:transparent; box-shadow:0 1px 3px rgba(22,146,79,.35);}
   .game-cell{display:flex; flex-wrap:wrap; justify-content:center; max-width:320px; margin:0 auto;}
   .acertos-badge{
-    display:inline-block; min-width:24px; padding:1px 5px; border-radius:6px;
-    font-weight:700; background:var(--panel2);
+    display:inline-block; min-width:24px; padding:2px 6px; border-radius:6px;
+    font-weight:700; background:var(--panel2); font-variant-numeric:tabular-nums;
   }
-  .acertos-badge.win{background:var(--accent); color:#06210f;}
-  .summary-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px;}
-  .summary-grid .item{background:var(--panel2); border-radius:9px; padding:8px 10px;}
-  .summary-grid .item .label{font-size:.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:.03em;}
-  .summary-grid .item .value{font-size:1.1rem; font-weight:700; margin-top:2px;}
+  .acertos-badge.win{background:var(--accent-soft); color:var(--accent);}
+  .summary-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px;}
+  .summary-grid .item{
+    background:var(--panel2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px;
+  }
+  .summary-grid .item .label{font-size:.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; font-weight:700;}
+  .summary-grid .item .value{font-size:1.22rem; font-weight:800; margin-top:3px; font-variant-numeric:tabular-nums; letter-spacing:-.01em;}
   .value.positive{color:var(--accent);}
   .value.negative{color:var(--danger);}
-  .history-item{border-bottom:1px solid var(--border); padding:6px 0; font-size:.8rem; display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px;}
+  .history-item{border-bottom:1px solid var(--border); padding:9px 2px; font-size:.82rem; display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px;}
   .history-item:last-child{border-bottom:none;}
-  .pill{background:var(--panel2); border-radius:999px; padding:2px 9px; font-size:.72rem; color:var(--muted);}
-  .filters{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;}
-  .empty{color:var(--muted); font-size:.8rem; text-align:center; padding:12px 0;}
-  a.linkbtn{color:var(--accent2); font-size:.78rem; text-decoration:none; cursor:pointer;}
-  .footer-note{color:var(--muted); font-size:.7rem; text-align:center; margin-top:4px;}
+  .pill{background:var(--panel2); border:1px solid var(--border); border-radius:999px; padding:3px 10px; font-size:.72rem; color:var(--muted); font-weight:600;}
+  .filters{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;}
+  .empty{color:var(--muted); font-size:.82rem; text-align:center; padding:18px 0;}
+  a.linkbtn{color:var(--accent2); font-size:.78rem; text-decoration:none; cursor:pointer; font-weight:600;}
+  .footer-note{color:var(--muted); font-size:.72rem; text-align:center; margin-top:6px; line-height:1.5;}
   #reportsCard{
-    position:sticky; top:8px; z-index:50;
+    position:sticky; top:10px; z-index:50;
     max-height:92vh; overflow-y:auto;
-    box-shadow:0 8px 20px rgba(0,0,0,.18);
+    box-shadow:var(--shadow-sticky);
+    border-color:var(--border-strong);
   }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div>
-    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V3.12</span></h1>
+    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.55em; color:var(--muted); font-weight:700; background:var(--panel2); border:1px solid var(--border); border-radius:999px; padding:2px 9px; vertical-align:middle;">V3.13</span></h1>
     <p class="sub">Busca o resultado oficial da Caixa, confere seus 10 jogos automaticamente e calcula os valores. Tudo fica salvo neste navegador.</p>
   </div>
 
@@ -113,7 +143,7 @@
     <textarea id="reportOutput" readonly style="display:none; width:100%; margin-top:14px; min-height:180px; background:var(--panel2); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:12px; font-family:ui-monospace,Consolas,monospace; font-size:.85rem; white-space:pre-wrap;"></textarea>
     <div class="row" id="reportActions" style="display:none; margin-top:10px;">
       <button id="btnCopyReport">Copiar texto</button>
-      <button id="btnWhatsapp" class="secondary" style="background:#25D366; color:#06210f; border:none;">Enviar no WhatsApp</button>
+      <button id="btnWhatsapp" class="secondary" style="background:#25D366; color:#ffffff; border:none;">Enviar no WhatsApp</button>
       <button id="btnShareReport" class="secondary" style="display:none;">Compartilhar</button>
     </div>
     <p class="status" id="reportStatus"></p>
@@ -130,7 +160,7 @@
     <textarea id="gamesTextarea" rows="10" style="width:100%; font-family:ui-monospace,Consolas,monospace; font-size:.82rem; background:var(--panel2); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:10px; white-space:pre-wrap; word-break:break-word;"></textarea>
     <div class="row" style="margin-top:8px;">
       <button id="btnSalvarJogos">Salvar jogos</button>
-      <label class="secondary" id="btnImportarPdf" style="display:inline-flex; align-items:center; padding:7px 12px; border:1px solid var(--border); border-radius:7px; cursor:pointer; background:var(--panel2); font-size:.85rem;">
+      <label class="secondary" id="btnImportarPdf" style="display:inline-flex; align-items:center; padding:9px 14px; border:1px solid var(--border-strong); border-radius:8px; cursor:pointer; background:var(--panel2); font-size:.85rem; font-weight:600;">
         Importar PDF do comprovante
         <input type="file" id="pdfInput" accept="application/pdf" style="display:none;">
       </label>
