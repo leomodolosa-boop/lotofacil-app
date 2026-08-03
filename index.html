@@ -80,7 +80,7 @@
 <body>
 <div class="wrap">
   <div>
-    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V3.11</span></h1>
+    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.6em; color:var(--muted); font-weight:600;">V3.12</span></h1>
     <p class="sub">Busca o resultado oficial da Caixa, confere seus 10 jogos automaticamente e calcula os valores. Tudo fica salvo neste navegador.</p>
   </div>
 
@@ -2605,6 +2605,17 @@ function parseGamesFromPdfText(text){
   return games;
 }
 
+// O comprovante da Caixa mostra, ao lado de cada jogo, a validade "NNNN a NNNN"
+// (o intervalo de concursos que aquela aposta cobre) — usado para já deixar os
+// relatórios (De/Até) ligados à leva de jogos recém-importada.
+function parseConcursoRangeFromPdfText(text){
+  const m = text.match(/\b(\d{3,5})\s*a\s*(\d{3,5})\b/);
+  if(!m) return null;
+  const from = parseInt(m[1]), to = parseInt(m[2]);
+  if(isNaN(from) || isNaN(to) || from > to) return null;
+  return {from, to};
+}
+
 const $ = (id) => document.getElementById(id);
 const fmtBRL = (n) => (n||0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
 
@@ -3922,7 +3933,17 @@ $('pdfInput').addEventListener('change', async (e) => {
     }else{
       $('gamesTextarea').value = gamesToText(games);
       gamesJustImportedFromPdf = true;
-      setGamesStatus(`${games.length} jogo(s) detectado(s) automaticamente — confira os números abaixo antes de clicar em "Salvar jogos".`);
+
+      const range = parseConcursoRangeFromPdfText(text);
+      let msg = `${games.length} jogo(s) detectado(s) automaticamente — confira os números abaixo antes de clicar em "Salvar jogos".`;
+      if(range){
+        $('reportRangeFrom').value = range.from;
+        $('reportRangeTo').value = range.to;
+        localStorage.setItem('lf_reportRangeFrom', String(range.from));
+        localStorage.setItem('lf_reportRangeTo', String(range.to));
+        msg += ` Relatórios já ajustados para os concursos ${range.from} a ${range.to}.`;
+      }
+      setGamesStatus(msg);
     }
   }catch(err){
     setGamesStatus('Erro ao ler o PDF: ' + err.message, true);
