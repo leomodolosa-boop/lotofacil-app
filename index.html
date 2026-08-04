@@ -110,7 +110,7 @@
 <body>
 <div class="wrap">
   <div>
-    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.55em; color:var(--muted); font-weight:700; background:var(--panel2); border:1px solid var(--border); border-radius:999px; padding:2px 9px; vertical-align:middle;">V3.14</span></h1>
+    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.55em; color:var(--muted); font-weight:700; background:var(--panel2); border:1px solid var(--border); border-radius:999px; padding:2px 9px; vertical-align:middle;">V3.15</span></h1>
     <p class="sub">Busca o resultado oficial da Caixa, confere seus 10 jogos automaticamente e calcula os valores. Tudo fica salvo neste navegador.</p>
   </div>
 
@@ -167,6 +167,7 @@
       <button id="btnResetJogos" class="secondary">Restaurar originais</button>
     </div>
     <p class="status" id="gamesStatus"></p>
+    <button id="btnCopiarTextoPdf" class="secondary" style="display:none; margin-top:6px;">Copiar texto extraído do PDF (para diagnóstico)</button>
   </div>
 
   <div class="card">
@@ -2635,6 +2636,24 @@ function parseGamesFromPdfText(text){
   return games;
 }
 
+// Fallback para quando o leitor de PDF (principalmente em alguns celulares) devolve
+// o texto do comprovante fora da ordem visual, quebrando a detecção por sequência
+// crescente de parseGamesFromPdfText. Em vez de depender da ordem, separa o texto
+// pelos marcadores de validade "NNNN a NNNN" que a Caixa imprime ao final de cada
+// jogo e procura 15 números únicos (1-25) dentro de cada pedaço, em qualquer ordem.
+function parseGamesFromReceiptText(text){
+  const primary = parseGamesFromPdfText(text);
+  if(primary.length) return primary;
+  const chunks = text.split(/\d{3,5}\s*a\s*\d{3,5}/);
+  const games = [];
+  chunks.forEach(chunk => {
+    const nums = (chunk.match(/\b\d{1,2}\b/g) || []).map(Number).filter(n => n >= 1 && n <= 25);
+    const unique = [...new Set(nums)];
+    if(unique.length === 15) games.push(unique.sort((a,b) => a-b));
+  });
+  return games;
+}
+
 // O comprovante da Caixa mostra, ao lado de cada jogo, a validade "NNNN a NNNN"
 // (o intervalo de concursos que aquela aposta cobre) — usado para já deixar os
 // relatórios (De/Até) ligados à leva de jogos recém-importada.
@@ -2986,6 +3005,9 @@ function buildDailyReport(concurso){
   const saldoLiquido = s.valorJogos - (saldoAcumulado + s.saldoAnterior);
   const perPerson = s.numParticipantes > 0 ? saldoLiquido / s.numParticipantes : 0;
   const concursosStr = allDraws.length > 1 ? `${allDraws[0].concurso} a ${allDraws[allDraws.length-1].concurso}` : `${d.concurso}`;
+  const linhaSaldoAnterior = s.saldoAnterior !== 0
+    ? `\n${s.saldoAnterior >= 0 ? '📌 Saldo anterior (a favor)' : '📌 Saldo anterior (devendo)'}: ${fmtBRL(s.saldoAnterior)}`
+    : '';
 
   return `🍀 *${GROUP_NAME}* 🍀
 📅 Concurso ${d.concurso} — ${d.data}
@@ -3002,7 +3024,7 @@ ${linhas}
 ${linhasAcumulado}
 
 💰 Total acumulado: *${fmtBRL(saldoAcumulado)}*
-💵 Valor de jogos: ${fmtBRL(s.valorJogos)}
+💵 Valor de jogos: ${fmtBRL(s.valorJogos)}${linhaSaldoAnterior}
 📈 Saldo líquido: *${fmtBRL(saldoLiquido)}*
 👥 Valor por pessoa (${s.numParticipantes}): *${fmtBRL(perPerson)}*`;
 }
@@ -3159,7 +3181,10 @@ function buildDailyReportImage(concurso){
   const accumH = showAccum ? (isBigAccum ? 148 : 84) : 0;
 
   const PANEL_PAD_TOP = 22, PANEL_ROW_H = 40, PANEL_DIVIDER_GAP = 22, PANEL_EMPH_H = 72, PANEL_PAD_BOTTOM = 24;
-  const financePanelH = PANEL_PAD_TOP + PANEL_ROW_H + PANEL_ROW_H + PANEL_DIVIDER_GAP + PANEL_EMPH_H + PANEL_PAD_BOTTOM;
+  const s = saveSettings();
+  const hasSaldoAnterior = s.saldoAnterior !== 0;
+  const financeRows = hasSaldoAnterior ? 3 : 2;
+  const financePanelH = PANEL_PAD_TOP + PANEL_ROW_H*financeRows + PANEL_DIVIDER_GAP + PANEL_EMPH_H + PANEL_PAD_BOTTOM;
 
   const GAME_ROW_H = 40, GAME_BALL_R = 16, GAME_BALL_GAP = 4;
 
@@ -3311,7 +3336,6 @@ function buildDailyReportImage(concurso){
   ctx.beginPath(); ctx.moveTo(60, y); ctx.lineTo(W-60, y); ctx.stroke();
   y += 46;
 
-  const s = saveSettings();
   const saldoLiquido = s.valorJogos - (saldoAcumulado + s.saldoAnterior);
   const perPerson = s.numParticipantes > 0 ? saldoLiquido / s.numParticipantes : 0;
 
@@ -3362,6 +3386,14 @@ function buildDailyReportImage(concurso){
   ctx.fillText('(−) 🏆 Prêmios do período', panelX+padX, ry);
   ctx.textAlign = 'right';
   ctx.fillText(`− ${fmtBRL(saldoAcumulado)}`, panelX+panelW-padX, ry);
+
+  if(hasSaldoAnterior){
+    ry += PANEL_ROW_H;
+    ctx.textAlign = 'left'; ctx.fillStyle = '#ffd7c2';
+    ctx.fillText(s.saldoAnterior >= 0 ? '(−) 📌 Saldo anterior' : '(+) 📌 Saldo anterior (devendo)', panelX+padX, ry);
+    ctx.textAlign = 'right';
+    ctx.fillText(s.saldoAnterior >= 0 ? `− ${fmtBRL(s.saldoAnterior)}` : `+ ${fmtBRL(Math.abs(s.saldoAnterior))}`, panelX+panelW-padX, ry);
+  }
 
   const dividerY = ry + PANEL_DIVIDER_GAP/2 + 6;
   ctx.strokeStyle = 'rgba(255,255,255,.3)';
@@ -3418,6 +3450,9 @@ function buildAggregateReport(draws, subtitle){
     .map(t => `${t} acertos: ${tiers[t].qtd} jogos — ${fmtBRL(tiers[t].total)}`)
     .join('\n') || 'Nenhum jogo bateu 11+ acertos no período.';
   const concursosStr = `${draws[0].concurso} a ${draws[draws.length-1].concurso}`;
+  const linhaSaldoAnterior = s.saldoAnterior !== 0
+    ? `\n${s.saldoAnterior >= 0 ? '📌 Saldo anterior (a favor)' : '📌 Saldo anterior (devendo)'}: ${fmtBRL(s.saldoAnterior)}`
+    : '';
   return `🍀 *${GROUP_NAME}* 🍀
 ${subtitle}
 Concursos ${concursosStr} (${draws.length} sorteios)
@@ -3426,7 +3461,7 @@ Concursos ${concursosStr} (${draws.length} sorteios)
 ${linhasTiers}
 
 💰 Total de prêmios: *${fmtBRL(saldoDia)}*
-💵 Valor de jogos: ${fmtBRL(s.valorJogos)}
+💵 Valor de jogos: ${fmtBRL(s.valorJogos)}${linhaSaldoAnterior}
 📊 Saldo líquido: *${fmtBRL(saldoLiquido)}*
 👥 Valor por pessoa (${s.numParticipantes}): *${fmtBRL(perPerson)}*`;
 }
@@ -3449,7 +3484,10 @@ function buildAggregateReportImage(draws, subtitle){
   const tierLineCount = tierLines.length || 1;
 
   const PANEL_PAD_TOP = 22, PANEL_ROW_H = 40, PANEL_DIVIDER_GAP = 22, PANEL_EMPH_H = 72, PANEL_PAD_BOTTOM = 24;
-  const financePanelH = PANEL_PAD_TOP + PANEL_ROW_H + PANEL_ROW_H + PANEL_DIVIDER_GAP + PANEL_EMPH_H + PANEL_PAD_BOTTOM;
+  const s = saveSettings();
+  const hasSaldoAnterior = s.saldoAnterior !== 0;
+  const financeRows = hasSaldoAnterior ? 3 : 2;
+  const financePanelH = PANEL_PAD_TOP + PANEL_ROW_H*financeRows + PANEL_DIVIDER_GAP + PANEL_EMPH_H + PANEL_PAD_BOTTOM;
 
   const W = 960;
   const H = 70 + 46 + 60
@@ -3513,7 +3551,6 @@ function buildAggregateReportImage(draws, subtitle){
   y += 40;
   y += 30;
 
-  const s = saveSettings();
   const saldoLiquido = s.valorJogos - (saldoDia + s.saldoAnterior);
   const perPerson = s.numParticipantes > 0 ? saldoLiquido / s.numParticipantes : 0;
 
@@ -3535,6 +3572,14 @@ function buildAggregateReportImage(draws, subtitle){
   ctx.fillText('(−) 🏆 Prêmios do período', panelX+padX, ry);
   ctx.textAlign = 'right';
   ctx.fillText(`− ${fmtBRL(saldoDia)}`, panelX+panelW-padX, ry);
+
+  if(hasSaldoAnterior){
+    ry += PANEL_ROW_H;
+    ctx.textAlign = 'left'; ctx.fillStyle = '#ffd7c2';
+    ctx.fillText(s.saldoAnterior >= 0 ? '(−) 📌 Saldo anterior' : '(+) 📌 Saldo anterior (devendo)', panelX+padX, ry);
+    ctx.textAlign = 'right';
+    ctx.fillText(s.saldoAnterior >= 0 ? `− ${fmtBRL(s.saldoAnterior)}` : `+ ${fmtBRL(Math.abs(s.saldoAnterior))}`, panelX+panelW-padX, ry);
+  }
 
   const dividerY = ry + PANEL_DIVIDER_GAP/2 + 6;
   ctx.strokeStyle = 'rgba(255,255,255,.3)';
@@ -3962,15 +4007,20 @@ $('btnResetJogos').addEventListener('click', () => {
   setGamesStatus('Jogos restaurados para os originais.');
 });
 
+let lastPdfExtractedText = '';
+
 $('pdfInput').addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if(!file) return;
   setGamesStatus('Lendo PDF...');
+  $('btnCopiarTextoPdf').style.display = 'none';
   try{
     const text = await extractPdfText(file);
-    const games = parseGamesFromPdfText(text);
+    lastPdfExtractedText = text;
+    const games = parseGamesFromReceiptText(text);
     if(!games.length){
-      setGamesStatus('Não consegui identificar jogos no PDF. Confira o arquivo ou digite manualmente.', true);
+      setGamesStatus('Não consegui identificar jogos no PDF. Confira o arquivo, digite manualmente, ou copie o texto extraído abaixo e me envie para eu diagnosticar.', true);
+      $('btnCopiarTextoPdf').style.display = 'inline-flex';
     }else{
       $('gamesTextarea').value = gamesToText(games);
       gamesJustImportedFromPdf = true;
@@ -3990,6 +4040,14 @@ $('pdfInput').addEventListener('change', async (e) => {
     setGamesStatus('Erro ao ler o PDF: ' + err.message, true);
   }
   e.target.value = '';
+});
+
+$('btnCopiarTextoPdf').addEventListener('click', async () => {
+  const ok = await copyToClipboard(lastPdfExtractedText);
+  setGamesStatus(ok
+    ? 'Texto copiado — cole numa mensagem para enviar.'
+    : 'Não consegui copiar automaticamente. Texto disponível no console do navegador.', !ok);
+  if(!ok) console.log(lastPdfExtractedText);
 });
 
 $('gamesTextarea').value = gamesToText(GAMES);
