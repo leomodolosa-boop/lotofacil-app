@@ -110,7 +110,7 @@
 <body>
 <div class="wrap">
   <div>
-    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.55em; color:var(--muted); font-weight:700; background:var(--panel2); border:1px solid var(--border); border-radius:999px; padding:2px 9px; vertical-align:middle;">V3.13</span></h1>
+    <h1>🍀 Conferência Automática — Bolão Lotofácil <span style="font-size:.55em; color:var(--muted); font-weight:700; background:var(--panel2); border:1px solid var(--border); border-radius:999px; padding:2px 9px; vertical-align:middle;">V3.14</span></h1>
     <p class="sub">Busca o resultado oficial da Caixa, confere seus 10 jogos automaticamente e calcula os valores. Tudo fica salvo neste navegador.</p>
   </div>
 
@@ -3876,6 +3876,17 @@ async function autoLoadToday(){
   }
   if(latest){
     saveDraws([latest]);
+    // Os jogos atuais só valem a partir do concurso salvo em "De" (preenchido
+    // automaticamente ao importar o comprovante). Se o último sorteio publicado for
+    // anterior a isso, ele é da leva antiga — não faz sentido conferir os jogos de
+    // hoje contra ele.
+    const validFrom = parseInt(localStorage.getItem('lf_reportRangeFrom'));
+    if(!isNaN(validFrom) && Number(latest.concurso) < validFrom){
+      state.lastDraws = [];
+      $('dailyResultsCard').style.display = 'none';
+      setStatus(`Último sorteio publicado: concurso ${latest.concurso} (${latest.data}) — mas seus jogos atuais só valem a partir do concurso ${validFrom}. Aguardando esse concurso ser sorteado.`, true);
+      return;
+    }
     state.lastDraws = [state.draws[latest.concurso]];
     renderDailyResults(state.lastDraws, []);
     setStatus(`Resultado mais recente carregado: concurso ${latest.concurso} (${latest.data}).`);
