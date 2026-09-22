@@ -1,20 +1,20 @@
 {
-  "concurso": 3784,
-  "data": "20/09/2026",
+  "concurso": 3785,
+  "data": "21/09/2026",
   "dezenas": [
     "01",
-    "02",
+    "04",
+    "07",
     "08",
-    "10",
     "11",
     "12",
+    "14",
     "15",
-    "16",
+    "17",
     "18",
     "19",
-    "20",
-    "21",
     "22",
+    "23",
     "24",
     "25"
   ],
@@ -22,35 +22,35 @@
     {
       "descricao": "15 acertos",
       "faixa": 1,
-      "ganhadores": 1,
-      "valorPremio": 3999286.18
+      "ganhadores": 2,
+      "valorPremio": 711908.8
     },
     {
       "descricao": "14 acertos",
       "faixa": 2,
-      "ganhadores": 283,
-      "valorPremio": 1844.33
+      "ganhadores": 282,
+      "valorPremio": 1512.37
     },
     {
       "descricao": "13 acertos",
       "faixa": 3,
-      "ganhadores": 10921,
+      "ganhadores": 8362,
       "valorPremio": 35.0
     },
     {
       "descricao": "12 acertos",
       "faixa": 4,
-      "ganhadores": 135259,
+      "ganhadores": 93699,
       "valorPremio": 14.0
     },
     {
       "descricao": "11 acertos",
       "faixa": 5,
-      "ganhadores": 724559,
+      "ganhadores": 487096,
       "valorPremio": 7.0
     }
   ],
   "acumulou": false,
-  "valorAcumuladoProximoConcurso": 1270340.83,
+  "valorAcumuladoProximoConcurso": 0.0,
   "valorEstimadoProximoConcurso": 2000000.0
 }
