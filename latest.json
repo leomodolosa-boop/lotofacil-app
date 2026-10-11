@@ -1,17 +1,17 @@
 {
-  "concurso": 3801,
-  "data": "09/10/2026",
+  "concurso": 3802,
+  "data": "11/10/2026",
   "dezenas": [
+    "02",
     "03",
-    "04",
-    "07",
-    "08",
+    "05",
+    "06",
     "09",
+    "10",
     "11",
     "12",
-    "13",
+    "14",
     "15",
-    "17",
     "19",
     "20",
     "21",
@@ -22,31 +22,31 @@
     {
       "descricao": "15 acertos",
       "faixa": 1,
-      "ganhadores": 4,
-      "valorPremio": 322726.1
+      "ganhadores": 2,
+      "valorPremio": 820218.59
     },
     {
       "descricao": "14 acertos",
       "faixa": 2,
-      "ganhadores": 427,
-      "valorPremio": 905.56
+      "ganhadores": 344,
+      "valorPremio": 1428.41
     },
     {
       "descricao": "13 acertos",
       "faixa": 3,
-      "ganhadores": 11083,
+      "ganhadores": 9863,
       "valorPremio": 35.0
     },
     {
       "descricao": "12 acertos",
       "faixa": 4,
-      "ganhadores": 116474,
+      "ganhadores": 106713,
       "valorPremio": 14.0
     },
     {
       "descricao": "11 acertos",
       "faixa": 5,
-      "ganhadores": 560223,
+      "ganhadores": 527843,
       "valorPremio": 7.0
     }
   ],
