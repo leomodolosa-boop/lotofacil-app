@@ -21,22 +21,32 @@
   "premiacoes": [
     {
       "descricao": "15 acertos",
+      "faixa": 1,
+      "ganhadores": 2,
       "valorPremio": 881659.15
     },
     {
       "descricao": "14 acertos",
+      "faixa": 2,
+      "ganhadores": 141,
       "valorPremio": 2622.18
     },
     {
       "descricao": "13 acertos",
+      "faixa": 3,
+      "ganhadores": 6445,
       "valorPremio": 35.0
     },
     {
       "descricao": "12 acertos",
+      "faixa": 4,
+      "ganhadores": 81717,
       "valorPremio": 14.0
     },
     {
       "descricao": "11 acertos",
+      "faixa": 5,
+      "ganhadores": 448011,
       "valorPremio": 7.0
     }
   ],
