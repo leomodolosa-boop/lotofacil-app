@@ -1,56 +1,56 @@
 {
-  "concurso": 3823,
-  "data": "06/11/2026",
+  "concurso": 3824,
+  "data": "08/11/2026",
   "dezenas": [
+    "01",
+    "02",
     "03",
-    "06",
     "07",
-    "08",
-    "10",
     "11",
+    "12",
+    "13",
+    "14",
     "15",
-    "16",
     "17",
     "18",
-    "20",
-    "21",
+    "19",
     "22",
-    "23",
-    "24"
+    "24",
+    "25"
   ],
   "premiacoes": [
     {
       "descricao": "15 acertos",
       "faixa": 1,
       "ganhadores": 2,
-      "valorPremio": 976316.42
+      "valorPremio": 800258.57
     },
     {
       "descricao": "14 acertos",
       "faixa": 2,
-      "ganhadores": 140,
-      "valorPremio": 2924.45
+      "ganhadores": 168,
+      "valorPremio": 1997.57
     },
     {
       "descricao": "13 acertos",
       "faixa": 3,
-      "ganhadores": 5639,
+      "ganhadores": 7085,
       "valorPremio": 35.0
     },
     {
       "descricao": "12 acertos",
       "faixa": 4,
-      "ganhadores": 81952,
+      "ganhadores": 96897,
       "valorPremio": 14.0
     },
     {
       "descricao": "11 acertos",
       "faixa": 5,
-      "ganhadores": 490644,
+      "ganhadores": 571711,
       "valorPremio": 7.0
     }
   ],
   "acumulou": false,
-  "valorAcumuladoProximoConcurso": 0.0,
+  "valorAcumuladoProximoConcurso": 1266888.61,
   "valorEstimadoProximoConcurso": 2000000.0
 }
